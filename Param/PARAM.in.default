@@ -62,10 +62,6 @@ MAXW			NameDistribution	! Determines the distribution of the flux (MAXW)
 VOLS			NameEfield		! Determines the method for calculation the electric field (VOLS, WESC, W5SC, or RSCE)
 F			UseEfInd		! Whether or not to use an inductive electric field
 
-#USEWPI
-F			DoUseWPI		! Whether to use wave particle interactions or not (Note, wave particle interactions are not currently working)
-F			DoUseBASDiff		! Whether to use BAS diffusion coefficients for wave particle interactions
-F			doUseKpDiff		! Whether to use KP based diffusion coefficients for wave particle interactions
 ***********************************************
 
 ***************** RAM BLOCK *******************
@@ -82,8 +78,23 @@ T                       DoElectrons             ! Whether to run electrons
 35                      nE                      ! Number of energy bins used in RAM
 72                      nPa                     ! Number of pitch angle bins used in RAM
 
-#USEPLANE
-F			DoUsePlane_SCB		! Whether to include the plasmasphere
+#USEWPI
+F                       DoUseWPI                ! Whether to use wave particle interactions or not (Note, wave particle interactions are not currently working)
+F                       DoUseBASDiff            ! Whether to use BAS diffusion coefficients for wave particle interactions
+F                       doUseKpDiff             ! Whether to use KP based diffusion coefficients for wave particle interactions
+F                       DoUseEMIC		! Whether to use EMIC wave scattering
+
+#USEFLC
+F                       DoUseFLC		! Whether to use FLC scattering
+F                       DoWriteFLCCoefficients	! Whether to output the calculated FLC coefficients
+
+#PLASMASPHERE
+F			DoUsePlasmasphere	! Whether to include the plasmasphere
+Carpenter		PlasmasphereModel	! Which plasmasphere model to use ()
+Analytic		TauCalculation		! Which method to use for calculating tau ()
+
+#COULOMB
+F			DoUseCoulomb		! Whether to use Coulomb interactions
 
 ***********************************************
 
@@ -125,9 +136,9 @@ F			PressureDetail          ! Whether to compute the full 3D pressure profile be
 1			PressureSmoothing	! What type of smoothing to perform on the RAM pressure when SCB reads it in (0 = None, 1 = Savitzky-Golay, 2 = B-Spline, 3 = Gaussian Filter, 4 = 1 + 3)
 3			SavitzyGolayIterations  ! Number of passes of the Savitzy-Golay filter to use if option 1 or 4 is used above
 
-#SCBBOUNDARY
-F                       FixedRadialBoundary     ! Whether to use a fixed radial boundary (outer and inner shell)
-T			FixedPolarBoundary	! Whether to use a fixed polar boundary (field line end points)
+#SCB_GHOSTCELLS
+0                       FixedRadialBoundary     ! Number of fixed radial boundary grid points
+1			FixedPolarBoundary	! Number of fixed polar boundary grid points
 
 ***********************************************
 
@@ -170,7 +181,7 @@ F			TimedRestartFiles	! Whether to time stamp the restart files. If F only one r
 300.0			DtMAGxyzFileWrite	! How often x, y, and z from SCB should be written
 
 #SAVEFLUX
-F			DoSaveFlux		! Whether RAM flux files should be written or not (currently outputs flux every hour)
+3600.0			DtSaveFlux		! How often to output RAM flux files
 
 #DUMP3DFLUX
 F			DoDump3DFlux		! Whether SCB 3D flux files should be written or not (currently outputs 3D flux every hour)
