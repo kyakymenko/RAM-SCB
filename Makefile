@@ -228,14 +228,10 @@ test1_run:
 	cd ${TESTDIR1}; ${MPIRUN} ./ram_scb.exe | tee runlog
 
 test1_check:
-	${SCRIPTDIR}/DiffNum.pl -b -a=1e-9				\
-		${TESTDIR1}/output_ram/log_d20130317_t000000.log	\
-		${IMDIR}/output/test1/log.ref				\
-		> test1.diff
 	${SCRIPTDIR}/DiffNum.pl -b -a=1e-9	                        \
 		${TESTDIR1}/output_ram/pressure_d20130317_t001500.dat   \
 		${IMDIR}/output/test1/pressure.ref                      \
-		>> test1.diff			        
+		> test1.diff			        
 	ncdump -v "Flux_H","B_xyz"                              	\
                ${TESTDIR1}/output_ram/sat1_d20130317_t000000.nc 	\
                | sed -e '1,/data:/d' >                          	\

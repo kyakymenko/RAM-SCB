@@ -425,8 +425,13 @@ MODULE ModRamInit
 
     ! Calculate Kinetic Energy EKEV [keV] at cent, RW depends on NE
     ELB=species(S)%Emin
-    RW = EXP(LOG(ELB) + (LOG(species(S)%Emax) - LOG(ELB))/nE)/ELB
-    WE(S,1) = ELB*RW - ELB
+    if (species(S)%Emax < 0.0) then
+        RW = 1.27
+        WE(S,1) = 3E-2
+    else
+        RW = EXP(LOG(ELB) + (LOG(species(S)%Emax) - LOG(ELB))/nE)/ELB
+        WE(S,1) = ELB*RW - ELB
+    endif
     !IF (abs(ELB-0.01).le.1e-9) THEN
     !  WE(1)=2.8E-3 !  |_._|___.___|____.____|______.______|
     !  RW=1.36      !    .     <   DE   >    <      WE     >
@@ -693,6 +698,7 @@ MODULE ModRamInit
               .and.(trim(species(i)%Initialization).ne.'na')) then
              call load_injection_file(i, trim(species(i)%Initialization), F2(i,:,:,:,:))
           endif
+          call ANISCH(i)
        enddo
 
        ! Reset dipole initialization for SWMF runs

@@ -654,27 +654,29 @@ end subroutine read_geomlt_file
         do iS = 1, nS
             iStatus = nf90_inq_varid(iFileID, 'Flux_'//species(iS)%s_name, iFluxVar)
             if (iStatus /= nf90_noerr) then
-                iF2(i,:,:,:,:) = 0.0
+                iF2(iS,:,:,:,:) = 0.0
             else
-                iStatus = nf90_get_var(iFileID, iFluxVar, iF2(i,:,:,:,:))
+                iStatus = nf90_get_var(iFileID, iFluxVar, iF2(iS,:,:,:,:))
             endif
 
             select case(species(iS)%s_name)
             case('OxygenP1')
-                iF2(i,:,:,:,:) = (1. - OfracN)*iF2(i,:,:,:,:)
+                iF2(iS,:,:,:,:) = (1. - OfracN)*iF2(iS,:,:,:,:)
             case('Nitrogen')
-                iF2(i,:,:,:,:) = OfracN*iF2(i,:,:,:,:)
+                iF2(iS,:,:,:,:) = OfracN*iF2(iS,:,:,:,:)
             end select
 
             iStatus = nf90_inq_varid(iFileID, 'PParT_'//species(iS)%s_name, iPParTVar)
             if (iStatus /= nf90_noerr) then
                 iPParT(iS,:,:) = 0.0
+                PParT(iS,:,:) = 0.0
             else
                 iStatus = nf90_get_var(iFileID, iPParTVar, iPParT(iS,:,:))
             endif
             iStatus = nf90_inq_varid(iFileID, 'PPerT_'//species(iS)%s_name, iPPerTVar)
             if (iStatus /= nf90_noerr) then
                 iPPerT(iS,:,:) = 0.0
+                PPerT(iS,:,:) = 0.0
             else
                 iStatus = nf90_get_var(iFileID, iPPerTVar, iPPerT(iS,:,:))
             endif
@@ -714,12 +716,12 @@ end subroutine read_geomlt_file
        DO j=1,NT
           angleGrid(:,j) = MLT(j)*2*PI_d/24
        ENDDO
-       do iS=1,nS
-          CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, iPParT(iS,:,:), radGrid(1:nR,:), &
-                                    angleGrid(1:nR,:), PParT(iS,:,:), GSLerr)
-          CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, iPPerT(iS,:,:), radGrid(1:nR,:), & 
-                                    angleGrid(1:nR,:), PPerT(iS,:,:), GSLerr)
-       enddo
+       !do iS=1,nS
+       !   CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, iPParT(iS,:,:), radGrid(1:nR,:), &
+       !                             angleGrid(1:nR,:), PParT(iS,:,:), GSLerr)
+       !   CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, iPPerT(iS,:,:), radGrid(1:nR,:), & 
+       !                             angleGrid(1:nR,:), PPerT(iS,:,:), GSLerr)
+       !enddo
        do l=1,nPa
           do k=1,nE
              do iS=1,nS
