@@ -559,13 +559,10 @@ end subroutine read_geomlt_file
     integer :: i, j, k, l, iS, GSLerr, iRDim, iTDim, iEDim, iPaDim, &
                iR, iT, iE, iPa, S
     integer :: iFluxVar, iFluxEVar, iFluxHVar, iFluxHeVar, iFluxOVar, &
-               iFileID, iStatus, iPParTVar, iPPerTVar
-    real(DP), allocatable :: iF2(:,:,:,:,:), iFNHS(:,:,:), iFNIS(:,:,:), iBOUNHS(:,:,:), &
-                             iBOUNIS(:,:,:), iEIR(:,:), iEIP(:,:), iBNES(:,:), &
-                             iHDNS(:,:,:), idBdt(:,:), idIdt(:,:,:), idIbndt(:,:,:), &
-                             iLz(:), iMLT(:), iEkeV(:), iPaVar(:), radGrid(:,:), &
-                             angleGrid(:,:), iPParT(:,:,:), iPPerT(:,:,:), &
-                             tPParT(:,:,:), tPPerT(:,:,:)
+               iFileID, iStatus, iEkeVVar
+    real(DP), allocatable :: iF2(:,:,:,:,:), iLz(:), iMLT(:), iEkeV(:,:), iPaVar(:), &
+                             radGrid(:,:), angleGrid(:,:), energyGrid(:,:), pitchGrid(:,:), &
+                             jF2(:,:,:,:)
     real(DP) :: DL1, DPHI
 
     character(len=100) :: NameFile
@@ -594,11 +591,10 @@ end subroutine read_geomlt_file
     iStatus = nf90_inquire_dimension(iFileID, iPaDim, len = iPa)
 
     ! ALLOCATE ARRAYS FOR DATA
-    ALLOCATE(iF2(nS,iR,iT,iE,iPa), iLz(iR+1), iMLT(iT), iEkeV(iE), iPaVar(iPa))
-    ALLOCATE(iFNHS(iR+1,iT,iPa), iBOUNHS(iR+1,iT,iPa), idBdt(iR+1,iT), iHDNS(iR+1,iT,iPa), &
-             iFNIS(iR+1,iT,iPa), iBOUNIS(iR+1,iT,iPa), idIdt(iR+1,iT,iPa), iBNES(iR+1,iT), &
-             idIbndt(iR+1,iT,iPa), iEIR(iR+1,iT), iEIP(iR+1,iT), tPParT(4,iR,iT), &
-             tPPerT(4,iR,iT),iPParT(nS,iR,iT),iPPerT(nS,iR,iT))
+    ALLOCATE(iF2(nS,iR,iT,iE,iPa), iLz(iR+1), iMLT(iT), iEkeV(nS, iE), iPaVar(iPa))
+    ! ALLOCATE ARRAYS FOR INTERPOLATION
+    ALLOCATE(radGrid(nR,nT),angleGrid(nR,nT),energyGrid(nE,nPa),pitchGrid(nE,nPa),jF2(iR,iT,nE,nPa))
+    !ALLOCATE(jF2(iR,iT,nE,nPa))
 
     ! GET VARIABLE IDS
     iStatus = nf90_inq_varid(iFileID, 'FluxE', iFluxVar)
@@ -607,9 +603,9 @@ end subroutine read_geomlt_file
         iStatus = nf90_inq_varid(iFileID, 'FluxH',  iFluxHVar)
         iStatus = nf90_inq_varid(iFileID, 'FluxHe', iFluxHeVar)
         iStatus = nf90_inq_varid(iFileID, 'FluxO',  iFluxOVar)
-        iStatus = nf90_inq_varid(iFileID, 'PParT', iPParTVar)
-        iStatus = nf90_inq_varid(iFileID, 'PPerT', iPPerTVar)
+        iStatus = nf90_inq_varid(iFileID, 'EnergyGrid', iEkeVVar)
         do i = 1, nS
+            iStatus = nf90_get_var(iFileID, iEkeVVar, iEkeV(i, :))
             select case(species(i)%s_name)
             case('Electron')
                 iStatus = nf90_get_var(iFileID, iFluxEVar,  iF2(i,:,:,:,:))
@@ -629,29 +625,15 @@ end subroutine read_geomlt_file
                 iF2(i,:,:,:,:) = 0._dp
             end select
         enddo
-        iStatus = nf90_get_var(iFileID, iPParTVar, tPParT(:,:,:))
-        iStatus = nf90_get_var(iFileID, iPPerTVar, tPPerT(:,:,:))
-        do i = 1, nS
-            select case(species(i)%s_name)
-            case('Electron')
-                iPPerT(i,:,:) = tPPerT(1,:,:)
-                iPParT(i,:,:) = tPParT(1,:,:)
-            case('Hydrogen')
-                iPPerT(i,:,:) = tPPerT(2,:,:)
-                iPParT(i,:,:) = tPParT(2,:,:)
-            case('HeliumP1')
-                iPPerT(i,:,:) = tPPerT(3,:,:)
-                iPParT(i,:,:) = tPParT(3,:,:)
-            case('OxygenP1')
-                iPPerT(i,:,:) = tPPerT(4,:,:)
-                iPParT(i,:,:) = tPParT(4,:,:)
-            case default
-                iPPerT(i,:,:) = 0._dp
-                iPParT(i,:,:) = 0._dp
-            end select
-        enddo
     else
         do iS = 1, nS
+            iStatus = nf90_inq_varid(iFileID, 'EnergyGrid_'//species(iS)%s_name, iEkeVVar)
+            if (iStatus /= nf90_noerr) then
+               iEkeV(iS, :) = 0.0
+            else
+               iStatus = nf90_get_var(iFileID, iEkeVVar, iEkeV(iS, :))
+            endif
+
             iStatus = nf90_inq_varid(iFileID, 'Flux_'//species(iS)%s_name, iFluxVar)
             if (iStatus /= nf90_noerr) then
                 iF2(iS,:,:,:,:) = 0.0
@@ -665,28 +647,15 @@ end subroutine read_geomlt_file
             case('Nitrogen')
                 iF2(iS,:,:,:,:) = OfracN*iF2(iS,:,:,:,:)
             end select
-
-            iStatus = nf90_inq_varid(iFileID, 'PParT_'//species(iS)%s_name, iPParTVar)
-            if (iStatus /= nf90_noerr) then
-                iPParT(iS,:,:) = 0.0
-                PParT(iS,:,:) = 0.0
-            else
-                iStatus = nf90_get_var(iFileID, iPParTVar, iPParT(iS,:,:))
-            endif
-            iStatus = nf90_inq_varid(iFileID, 'PPerT_'//species(iS)%s_name, iPPerTVar)
-            if (iStatus /= nf90_noerr) then
-                iPPerT(iS,:,:) = 0.0
-                PPerT(iS,:,:) = 0.0
-            else
-                iStatus = nf90_get_var(iFileID, iPPerTVar, iPPerT(iS,:,:))
-            endif
         enddo
     endif
-
     ! CLOSE INITIALIZATION FILE
     iStatus = nf90_close(iFileID)
     call ncdf_check(iStatus, NameSub)
 
+    ! In the future we may want to be able to interpolate onto a different RadiusMax/RadiusMin
+    ! but for now we are assuming the same sized spatial grid, just potentially different number
+    ! of grid points.
     DL1 = (RadiusMax - RadiusMin)/(iR - 1)
     DO I=1,iR+1
       iLz(I)=2.+(I-2)*DL1
@@ -697,51 +666,41 @@ end subroutine read_geomlt_file
       iMLT(J)=(J-1)*DPHI
     END DO
 
-    ! We don't currently interpolate across energy or pitch angle
-    !iEkeV = EkeV
-    !iPaVar = Pa
+    ! This is a hack for now, it will cause errors if the dimension of pitch angle bins isn't the same
+    iPaVar = cos(Pa*PI_d/180.)
 
-    ! Now we need to check the dimensions of the initialization file and
-    ! interpolate if they are different
-    if ((nR.eq.iR).and.(nT.eq.iT)) then
-       F2     = iF2
-       PParT  = iPParT
-       PPerT  = iPPerT
-    else
-       ! Interpolate spatially for each energy and pitch angle (if required)
-       ALLOCATE(radGrid(nR+1,nT),angleGrid(nR+1,nT))
-       DO i=1,NR+1
+    do iS=1,nS
+       DO i=1,NR
           radGrid(i,:) = Lz(i)
        ENDDO
        DO j=1,NT
           angleGrid(:,j) = MLT(j)*2*PI_d/24
        ENDDO
-       !do iS=1,nS
-       !   CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, iPParT(iS,:,:), radGrid(1:nR,:), &
-       !                             angleGrid(1:nR,:), PParT(iS,:,:), GSLerr)
-       !   CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, iPPerT(iS,:,:), radGrid(1:nR,:), & 
-       !                             angleGrid(1:nR,:), PPerT(iS,:,:), GSLerr)
-       !enddo
-       do l=1,nPa
-          do k=1,nE
-             do iS=1,nS
-                CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, iF2(iS,:,:,k,l), radGrid(1:nR,:), &
-                                          angleGrid(1:nR,:), F2(iS,1:nR,:,k,l), GSLerr)
-             enddo
+       DO k=1,nE
+          energyGrid(k,:) = EkeV(iS,k)
+       ENDDO
+       DO l=1,nPa
+          pitchGrid(:,l) = cos(Pa(l)*PI_d/180.0)
+       ENDDO
+       jF2(:,:,:,:) = 0.0 
+       do i=1,iR
+          do j=1,iT
+             CALL GSL_Interpolation_2D(iEkeV(iS,:), iPaVar, iF2(iS,i,j,:,:), energyGrid, &
+                                       pitchGrid, jF2(i,j,:,:), GSLerr)
           enddo
        enddo
-       DEALLOCATE(radGrid,angleGrid)
-
-       ! Interpolate across pitch angle
-       if ((nPa.ne.iPa).or.(nE.ne.iE)) then
-        call CON_stop('Changing pitch angle and energy resolution not currently supported')
-       endif
-    endif
+       do k=1,nE
+          do l=1,nPa
+             CALL GSL_Interpolation_2D(iLz(1:iR), iMLT, jF2(:,:,k,l), radGrid(1:nR,:), angleGrid(1:nR,:), &
+                                       F2(iS,1:nR,:,k,l), GSLerr)
+          enddo
+       enddo
+    enddo
     F2(:,:,:,1,:) = F2(:,:,:,2,:)
 
     DEALLOCATE(iF2, iEkeV, iMLT, iLz, iPaVar)
-    DEALLOCATE(iFNHS, iBOUNHS, iFNIS, iBOUNIS, iBNES, iHDNS, iEIR, iEIP, &
-    idBdt, idIbndt, idIdt, iPParT, iPPerT)
+    DEALLOCATE(radGrid, angleGrid, energyGrid, pitchGrid, jF2)
+    !DEALLOCATE(jF2)
 
   end subroutine read_initial
 
