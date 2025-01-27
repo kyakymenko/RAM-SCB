@@ -163,7 +163,7 @@ MODULE ModRamSpecies
      RAMSpecies(7)%CEX_species = 'na'
      RAMSpecies(7)%Initialization = 'InitializationFile'
      RAMSpecies(7)%plasmasphereRatio = 1.0
-     RAMSpecies(7)%Emin = 1000.0
+     RAMSpecies(7)%Emin = 100.0
      RAMSpecies(7)%Emax = 10000.0
 
   end subroutine DefineSpecies

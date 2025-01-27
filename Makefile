@@ -437,3 +437,38 @@ testEMIC_check:
 	        ${IMDIR}/output/testEMIC/pressure.ref                      \
 	        >> testEMIC.diff
 	@echo "Test Successful!"
+
+#TEST EMIC----------------------------------
+testSpecies:
+	@echo "starting..." > testSpecies.diff
+	@echo "testSpecies_compile..." >> testSpecies.diff
+	make testSpecies_compile
+	@echo "testSpecies_rundir..." >> testSpecies.diff
+	make testSpecies_rundir PARAMFILE=PARAM.in.testSpecies
+	@echo "testSpecies_run..." >> testSpecies.diff
+	make testSpecies_run MPIRUN=
+	@echo "testSpecies_check..." >> testSpecies.diff
+	make testSpecies_check
+
+testSpecies_compile:
+	make
+
+testSpecies_rundir:
+	rm -rf ${TESTDIRC}
+	make rundir RUNDIR=${TESTDIRC} STANDALONE="YES"
+	cp Param/${PARAMFILE} ${TESTDIRC}/PARAM.in
+	cp input/sat*.dat ${TESTDIRC}/
+
+testSpecies_run:
+	cd ${TESTDIRC}; ${MPIRUN} ./ram_scb.exe | tee runlog;
+
+testSpecies_check:
+	${SCRIPTDIR}/DiffNum.pl -b -a=1e-9                              \
+	        ${TESTDIRC}/output_ram/log_d20130317_t000000.log        \
+	        ${IMDIR}/output/testSpecies/log.ref                           \
+	        > testSpecies.diff
+	${SCRIPTDIR}/DiffNum.pl -b -a=1e-9                              \
+	        ${TESTDIRC}/output_ram/pressure_d20130317_t001500.dat   \
+	        ${IMDIR}/output/testSpecies/pressure.ref                      \
+	        >> testSpecies.diff
+	@echo "Test Successful!"
