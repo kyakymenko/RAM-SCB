@@ -1125,7 +1125,7 @@ end subroutine read_geomlt_file
               AVEFL(I,J,K)=AVEFL(I,J,K)+F(I,J,K,L)*WMU(L)
             ENDDO
             AVEFL(I,J,K)=AVEFL(I,J,K)/(MU(NPA)-MU(UPA(I)))
-            PRECFL=PRECFL+AVEFL(I,J,K)*PI*WE(K)
+            PRECFL=PRECFL+AVEFL(I,J,K)*PI*WE(S,K)
           ENDDO
           WRITE(UNITTMP_,70) LZ(I),PHI(J),PRECFL
         END DO
@@ -1148,7 +1148,7 @@ end subroutine read_geomlt_file
         if (outsideMGNP(I,J) == 1) F(I,J,:,:) = 1e-31
           DO 822 K=2,NE
 !            WRITE(20,31) T/3600.,LZ(I),KP,MLT(J),EKEV(K),F(I,J,K,2)
-           WRITE(30,31) T/3600.,LZ(I),KP,MLT(J),EKEV(K),F(I,J,K,27)
+           WRITE(30,31) T/3600.,LZ(I),KP,MLT(J),EKEV(S,K),F(I,J,K,27)
 !	    WRITE(40,31) T/3600.,LZ(I),KP,MLT(J),EKEV(K),F(I,J,K,UPA(I))
 822         CONTINUE
       ENDDO

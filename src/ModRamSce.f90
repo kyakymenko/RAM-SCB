@@ -268,7 +268,7 @@ MODULE ModRamSce
           do i=1, npsi
              do j=2, nzeta
                 do k=1, nE
-                   write(UnitTmp_,'(f8.4,1x,f8.4,1x,f8.4,1x,E14.6)')rGrid(i,j), aGrid(i,j), EKEV(k), ave_fluxEQ(i,j,k)                   
+                   write(UnitTmp_,'(f8.4,1x,f8.4,1x,f8.4,1x,E14.6)')rGrid(i,j), aGrid(i,j), EKEV(iS,k), ave_fluxEQ(i,j,k) 
                 end do
              end do
           end do

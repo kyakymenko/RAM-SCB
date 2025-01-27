@@ -588,7 +588,7 @@ MODULE ModRamRun
                    taudaa_he = ATAW_emic_he(I,J,K,L)/MUBOUN/BOUNHS(I,J,L)/(1.-MUBOUN*MUBOUN)
                    
                    IF(DoSaveLwgr .and. (MOD(INT(T),3600).EQ.0.)) THEN
-                   write(24,556)ekev(k), PABn(L), taudaa_h, taudaa_he, &
+                   write(24,556)ekev(S,k), PABn(L), taudaa_h, taudaa_he, &
                         1./taudaa_h, 1./taudaa_he
                    ENDIF
 
