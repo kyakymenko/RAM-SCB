@@ -86,7 +86,7 @@ MODULE ModRamSpecies
      RAMSpecies(3)%WPI = .false.
      RAMSpecies(3)%CEX = .true.
      RAMSpecies(3)%FLC = .true.
-     RAMSpecies(3)%EMIC = .true.
+     RAMSpecies(3)%EMIC = .false.
      RAMSpecies(3)%CEX_file = 'na'
      RAMSpecies(3)%CEX_species = 'na'
      RAMSpecies(3)%Initialization = 'InitializationFile'
@@ -104,7 +104,7 @@ MODULE ModRamSpecies
      RAMSpecies(4)%WPI = .false.
      RAMSpecies(4)%CEX = .true.
      RAMSpecies(4)%FLC = .true.
-     RAMSpecies(4)%EMIC = .true.
+     RAMSpecies(4)%EMIC = .false.
      RAMSpecies(4)%CEX_file = 'na'
      RAMSpecies(4)%CEX_species = 'na'
      RAMSpecies(4)%Initialization = 'InitializationFile'

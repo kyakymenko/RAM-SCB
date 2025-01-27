@@ -6,6 +6,8 @@ import datetime as dt
 import ftplib
 import io
 import re
+import ssl
+from urllib import request
 import numpy as np
 
 
@@ -47,15 +49,11 @@ if __name__ == '__main__':
     outJDs = [startjd + n + 0.5 for n in range(int(endjd-startjd))]
     outdates = [lastdate+dt.timedelta(days=n+1) for n in range(int(endjd-startjd))]
 
-    # download updated F10.7 from ftp://ftp.geolab.nrcan.gc.ca/data/solar_flux/daily_flux_values/fluxtable.txt
+    # download updated F10.7 from http://spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt
     # only has data from 2004-10-28 (prior data are in different files)
-    io_store = io.StringIO()
-    ftp = ftplib.FTP('ftp.seismo.nrcan.gc.ca')
-    ftp.login()
-    ftp.cwd('spaceweather/solar_flux/daily_flux_values')
-    ftp.retrlines('RETR {0}'.format('fluxtable.txt'), io_store.write)
-    io_store.seek(0)
-    conts = io_store.read()
+    f107url = 'http://spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt'
+    gcontext = ssl.SSLContext()  # Some systems have certification issues for https - workaround
+    conts = request.urlopen(f107url, context=gcontext).read().decode()
 
     # get first line of data (needs regex as no linebreaks & odd spacing
     # then split up, read dates, interpolate to requested JDs
