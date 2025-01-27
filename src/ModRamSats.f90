@@ -445,7 +445,7 @@ module ModRamSats
         iStatus = nf90_inq_varid(iFileID, 'energy_grid_'//species(iS)%s_code, iEgridVar)
         iStatus = nf90_put_var(iFileID, iEgridVar, Ekev(iS,:))
 
-        iStatus = nf90_inq_varid(iFileID, 'energy_grid_'//species(iS)%s_code, iEwidVar)
+        iStatus = nf90_inq_varid(iFileID, 'energy_width_'//species(iS)%s_code, iEwidVar)
         iStatus = nf90_put_var(iFileID, iEwidVar,  wE(iS,:))
     enddo
     iStatus = nf90_put_var(iFileID, iPgridVar, Mu)
