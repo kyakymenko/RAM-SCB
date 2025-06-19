@@ -121,8 +121,8 @@ module ModRamParams
   character(len=200) :: NameOmniFile  = 'omni.txt'
   character(len=200) :: BoundaryPath  = 'IM/input_ram/'
   character(len=200) :: InitializationPath = 'IM/input_ram/'
-  character(len=200) :: HissFilePath = '/projects/lanl/SHIELDS/RAM_SCB_input/PlHiss/' 
-  character(len=200) :: BASFilePath = '/projects/lanl/SHIELDS/shields_codes/BAS_bavDxx/'
+  character(len=200) :: HissFilePath = 'IM/input_ram/PlHiss/' 
+  character(len=200) :: BASFilePath = 'IM/input_ram/BAS_bavDxx/'
 
   character(len=7) :: densityMode = "RAIRDEN"
 
