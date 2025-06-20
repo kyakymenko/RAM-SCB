@@ -352,7 +352,7 @@ MODULE ModRamWPI
       write(ST4,'(I3.3)') INT(LZ(I)*100)
       DO IX=1,NCF
         write(ST3,'(I2.2)') INT(fpofc(ix))
-        OPEN(UNIT=UNITTMP_,FILE=trim(PathRamIn)//'/whis_L'//ST4//'_'//ST3//ST2//'.aan',STATUS='old')
+        OPEN(UNIT=UNITTMP_,FILE=trim(PathRamIn)//'PlHiss/whis_L'//ST4//'_'//ST3//ST2//'.aan',STATUS='old')
         READ(UNITTMP_,20) HEADER
         DO KN=1,ENG
           read(UNITTMP_,17) ENOR(KN)
@@ -493,7 +493,7 @@ MODULE ModRamWPI
 !**************************************************************************
   SUBROUTINE WAPARA_BAS(S)
     !!!! Module Variables
-    use ModRamMain,      ONLY: DP
+    use ModRamMain,      ONLY: DP, PathRamIn
     use ModRamParams,    ONLY: DoUseKpDiff, BASFilePath
     use ModRamGrids,     ONLY: NPA, NT, NE, NR
     use ModRamVariables, ONLY: MU, nR_Dxx, nE_Dxx, nPa_Dxx, RCHOR_Dxx, &
@@ -529,7 +529,7 @@ MODULE ModRamWPI
 
     do nkp=1,nloop
       write(nchar,'(i1)') nkp-1
-      fname = trim(BASFilePath)//'bav_diffcoef_chorus_rpa_Kp'//trim(nchar)//'.PAonly.dat'
+      fname = trim(PathRamIn)//'BAS_bavDxx/bav_diffcoef_chorus_rpa_Kp'//trim(nchar)//'.PAonly.dat'
       OPEN(UNIT=UNITTMP_,FILE=trim(fname),STATUS='old')
       ! First skip over header
       do i=1,12,1
