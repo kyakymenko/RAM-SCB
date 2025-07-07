@@ -462,12 +462,15 @@ MODULE ModRamWPI
 !**************************************************************************
   SUBROUTINE WAPARA_Kp(S)
 
-    use ModRamVariables, ONLY: KP, CDAAR, CDAAR_chorus, NKpDiff, Kp_chorus
+    use ModRamVariables, ONLY: KP, CDAAR, CDAAR_chorus, &
+                                   CDAER, CDAER_chorus, &
+                                   CDEER, CDEER_chorus, &
+                                   NKpDiff, Kp_chorus
 
     implicit none
     integer, intent(in) :: S
 
-    integer :: i1,i2
+    integer :: i1, i2
 
     if (Kp.gt.maxval(Kp_chorus)) then
       CDAAR(:,:,:,:) = CDAAR_chorus(:,:,1:35,:,NKpDiff)
@@ -494,83 +497,57 @@ MODULE ModRamWPI
   SUBROUTINE WAPARA_BAS(S)
     !!!! Module Variables
     use ModRamMain,      ONLY: DP, PathRamIn
-    use ModRamParams,    ONLY: DoUseKpDiff, BASFilePath
+    use ModRamParams,    ONLY: DoUseKpDiff
     use ModRamGrids,     ONLY: NPA, NT, NE, NR
-    use ModRamVariables, ONLY: MU, nR_Dxx, nE_Dxx, nPa_Dxx, RCHOR_Dxx, &
-                               TCHOR_Dxx, ECHOR_Dxx, CDAAR_chorus, &
-                               PACHOR_Dxx, CDAAR, nKpDiff, nT_Dxx
-    !!!! Module Subroutines/Functions
-    use ModRamFunctions, ONLY: ACOSD
+    use ModRamVariables, ONLY: MU, nR_Dxx, nE_Dxx, nPa_Dxx, nT_Dxx, &
+                               RCHOR_Dxx, TCHOR_Dxx, ECHOR_Dxx, PACHOR_Dxx, &
+                               CDAAR_chorus, CDAER_chorus, CDEER_chorus, &
+                               CDAAR, CDAER, CDEER, &
+                               nKpDiff, Kp_chorus
     !!!! Share Modules
     use ModIoUnit, ONLY: UNITTMP_
 
     implicit none
     integer, intent(in) :: S
 
-    integer :: i,j,k,l,nkp,nloop
-    character(len=32) :: H1,H2,H3,nchar
-    character(len=200) :: fname
-    real(DP), ALLOCATABLE :: Dxx_hold(:,:,:), PA(:)
+    integer :: ncid, vid, ierr
+    character(len=*), parameter :: fname = 'chorus_diffusion_kp.nc'
 
-    ALLOCATE(Dxx_hold(NR_Dxx,NE_Dxx,NPA_Dxx), PA(NPA))
-    Dxx_hold = 0.0; Pa = 0.0
+    ! open 
+    ierr = nf90_open(trim(PathRamIn)//'BAS_bavDxx/'//fname, nf90_nowrite, ncid)
+    if (ierr /= nf90_noerr) stop 'Cannot open chorus_diffusion_Kp.nc'
 
-    write(*,*) "Starting WAPARA_BAS"
+    !-- read 1-D axes ------------------------------------------
+    call nf90_inq_varid(ncid, 'r_grid', vid); call nf90_get_var(ncid, vid, RCHOR_Dxx)
+    call nf90_inq_varid(ncid, 'mlt_grid', vid); call nf90_get_var(ncid, vid, TCHOR_Dxx)
+    call nf90_inq_varid(ncid, 'energy_grid', vid); call nf90_get_var(ncid, vid, ECHOR_Dxx)
+    call nf90_inq_varid(ncid, 'pa_grid', vid); call nf90_get_var(ncid, vid, PACHOR_Dxx)
+    call nf90_inq_varid(ncid, 'Kp_bins', vid); call nf90_get_var(ncid, vid, Kp_chorus)
 
-    DO L=1,NPA
-      PA(L)=ACOSD(MU(L))
-    END DO
+    !-- read full 5-D diffusion tensors ------------------------
+    call nf90_inq_varid(ncid, 'Daa', vid)
+    call nf90_get_var(ncid, vid, CDAAR_chorus)   ! (nR_Dxx,nT_Dxx,nE_Dxx,nPa_Dxx,nKpDiff)
 
-    if (DoUseKpDiff) then
-      nloop = NKpDiff
-    else
-      nloop = 1
-    endif
+    call nf90_inq_varid(ncid, 'Dae', vid)
+    call nf90_get_var(ncid, vid, CDAER_chorus)
 
-    do nkp=1,nloop
-      write(nchar,'(i1)') nkp-1
-      fname = trim(PathRamIn)//'BAS_bavDxx/bav_diffcoef_chorus_rpa_Kp'//trim(nchar)//'.PAonly.dat'
-      OPEN(UNIT=UNITTMP_,FILE=trim(fname),STATUS='old')
-      ! First skip over header
-      do i=1,12,1
-        read(UNITTMP_,*)
-      end do
-      do i=1,NR_Dxx
-        do j=1,NT_Dxx
-          do k=1,NE_Dxx
-            read(UNITTMP_,'(A19,F6.4,A9,F6.4,A12,F8.2)') H1,RCHOR_Dxx(i), H2, &
-                           TCHOR_Dxx(j), H3, ECHOR_Dxx(k)
-            do l=1,NPA_Dxx
-              read(UNITTMP_,'(F15.6,3E18.6)') PACHOR_Dxx(l),CDAAR_chorus(i,j,k,l,nkp)
-            end do
-            ! skip over blank lines
-            do l=1,4
-              read(UNITTMP_,*)
-            end do
-          end do
-        end do
-      end do
-      CLOSE(UNIT=UNITTMP_)
-      ! Interpolate onto L-shell, energy and pitch angle, assuming time is
-      ! normal
-      if ((NT.ne.25).and.(NE.ne.35)) then
-        write(*,*) "We have a problem... assuming NT=25 & NE=35"
-        stop
-      end if
+    call nf90_inq_varid(ncid, 'Dee', vid)
+    call nf90_get_var(ncid, vid, CDEER_chorus)
 
-      if ((NR_Dxx.eq.NR).and.(NPA.eq.NPA_Dxx)) then
-        write(*,*) "No interpolation of diffusion coeff for", fname
-      end if
+    call nf90_close(ncid)
 
-    end do   ! end NKpDiff loop
+    write(*,*) '   diffusion tensors loaded (netCDF)'
+    return
 
-    ! Initialization
-    CDAAR(:,:,:,:) = CDAAR_chorus(:,:,1:35,:,1)
+    ! Should add interpolations if Dxx grids are different from RAM grids
+    ! For now, just catch if dimensions are different
+    if ( (nR_Dxx  .ne. NR)  .or. &
+         (nT_Dxx  .ne. NT)  .or. &
+         (nE_Dxx  .ne. NE)  .or. &
+         (nPa_Dxx .ne. NPA) ) then
+        stop 'Current version assumes that Dxx grids are the same as RAM grids'
+    end if
 
-    write(*,*) "Finished WAPARA_BAS"
-
-    DEALLOCATE(Dxx_hold, PA)
-    RETURN
   END SUBROUTINE WAPARA_BAS
 
 !************************************************************************

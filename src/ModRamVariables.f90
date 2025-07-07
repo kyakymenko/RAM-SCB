@@ -50,16 +50,20 @@ Module ModRamVariables
 ! ModRamWPI variables
   real(DP), ALLOCATABLE :: WALOS1(:,:), WALOS2(:,:), WALOS3(:,:), fpofc(:), &
                            NDVVJ(:,:,:,:), NDAAJ(:,:,:,:), ENOR(:), ECHOR(:), &
-                           BDAAR(:,:,:,:), CDAAR(:,:,:,:),&
+                           BDAAR(:,:,:,:), CDAAR(:,:,:,:), &
+                           CDAER(:,:,:,:), CDEER(:,:,:,:), &
                            Daa_emic_h(:,:,:,:), Daa_emic_he(:,:,:,:), &
                            EKEV_emic(:), fp2c_emic(:), Ihs_emic(:,:,:), Ihes_emic(:,:,:)
-  integer, parameter :: NKpDiff = 5, &
+  integer, parameter :: NKpDiff = 6, &
                         NR_Dxx  = 20, &
-                        NT_Dxx  = 25, &
-                        NE_Dxx  = 45, &
+                        NT_Dxx  = 49, &
+                        NE_Dxx  = 35, &
                         NPA_Dxx = 72  
-  integer, dimension(5) :: Kp_Chorus = (/0,1,2,3,4/) 
-  real(DP) :: CDAAR_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff)
+  integer :: Kp_Chorus(NKpDiff)
+  real(DP) :: CDAAR_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff), &
+              CDAER_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff), &
+              CDEER_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff)
+
   real(DP) :: RCHOR_Dxx(NR_Dxx), TCHOR_Dxx(NT_Dxx), ECHOR_Dxx(NE_Dxx), &
               PACHOR_Dxx(NPA_Dxx)
 
