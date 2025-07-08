@@ -472,19 +472,34 @@ MODULE ModRamWPI
 
     integer :: i1, i2
 
-    if (Kp.gt.maxval(Kp_chorus)) then
-      CDAAR(:,:,:,:) = CDAAR_chorus(:,:,1:35,:,NKpDiff)
+    ! if Kp ≥ highest value, select last slice --------------------
+    if (KP >= Kp_chorus(NKpDiff)) then
+        CDAAR = CDAAR_chorus(:,:,:,:, NKpDiff)
+        CDAER = CDAER_chorus(:,:,:,:, NKpDiff)
+        CDEER = CDEER_chorus(:,:,:,:, NKpDiff)
     else
-      i1 = minloc(abs(Kp-Kp_chorus),dim=1)
-      if (Kp.lt.Kp_chorus(i1)) then
-        i1 = i1-1
-      end if
-      i2 = i1+1
-      ! Linear interpolation of Kp
-      CDAAR(:,:,:,:) = (Kp-Kp_chorus(i1))*CDAAR_chorus(:,:,1:35,:,i2) &
-                     + (Kp_chorus(i2)-Kp)*CDAAR_chorus(:,:,1:35,:,i1)
-      CDAAR = CDAAR/(Kp_chorus(i2) - Kp_chorus(i1))
+        ! locate lower bin edge
+        i1 = max(1, maxloc(Kp_chorus, dim=1, mask=KP >= Kp_chorus) )
+        i2 = min(NKpDiff, i1+1)
+
+        CDAAR = (KP - Kp_chorus(i1)) * CDAAR_chorus(:,:,:,:, i2)  &
+              + (Kp_chorus(i2) - KP) * CDAAR_chorus(:,:,:,:, i1)
+
+        CDAER = (KP - Kp_chorus(i1)) * CDAER_chorus(:,:,:,:, i2)  &
+              + (Kp_chorus(i2) - KP) * CDAER_chorus(:,:,:,:, i1)
+
+        CDEER = (KP - Kp_chorus(i1)) * CDEER_chorus(:,:,:,:, i2)  &
+              + (Kp_chorus(i2) - KP) * CDEER_chorus(:,:,:,:, i1)
+
+        CDAAR = CDAAR / (Kp_chorus(i2) - Kp_chorus(i1))
+        CDAER = CDAER / (Kp_chorus(i2) - Kp_chorus(i1))
+        CDEER = CDEER / (Kp_chorus(i2) - Kp_chorus(i1))
     end if
+
+    ! wrap to 24 h (RAM convention)
+    CDAAR(:,25,:,:) = CDAAR(:,1,:,:)
+    CDAER(:,25,:,:) = CDAER(:,1,:,:)
+    CDEER(:,25,:,:) = CDEER(:,1,:,:)
     CDAAR(:,25,:,:) = CDAAR(:,1,:,:)
 
     return
