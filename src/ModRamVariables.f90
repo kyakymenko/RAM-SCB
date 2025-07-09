@@ -59,7 +59,7 @@ Module ModRamVariables
                         NT_Dxx  = 49, &
                         NE_Dxx  = 35, &
                         NPA_Dxx = 72  
-  integer :: Kp_Chorus(NKpDiff)
+  real(DP), dimension(6) :: Kp_Chorus = (/0.5, 1.5, 2.5, 3.5, 5.5, 8.0/) 
   real(DP) :: CDAAR_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff), &
               CDAER_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff), &
               CDEER_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff)

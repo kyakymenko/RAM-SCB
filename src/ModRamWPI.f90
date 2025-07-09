@@ -472,35 +472,47 @@ MODULE ModRamWPI
 
     integer :: i1, i2
 
-    ! if Kp ≥ highest value, select last slice --------------------
-    if (KP >= Kp_chorus(NKpDiff)) then
+    ! This is a version in which we assume that diffusion tensors
+    ! represent the center of each Kp bin, thus 
+    ! Kp_chorus = /0.5, 1.5, 2.5, 3.5, 5.5, 8.0/
+    ! No interpolation when run-time Kp_chorus(NKpDIff) <Kp < Kp_chorus(1)
+    if (KP <= Kp_chorus(1)) then
+        CDAAR = CDAAR_chorus(:,:,:,:,1)
+        CDAER = CDAER_chorus(:,:,:,:,1)
+        CDEER = CDEER_chorus(:,:,:,:,1)
+
+    elseif (KP >= Kp_chorus(NKpDiff)) then
         CDAAR = CDAAR_chorus(:,:,:,:, NKpDiff)
         CDAER = CDAER_chorus(:,:,:,:, NKpDiff)
         CDEER = CDEER_chorus(:,:,:,:, NKpDiff)
+
+    ! If KP lies between two centres, linear interpolation
     else
-        ! locate lower bin edge
-        i1 = max(1, maxloc(Kp_chorus, dim=1, mask=KP >= Kp_chorus) )
-        i2 = min(NKpDiff, i1+1)
+        ! find lower-bound index i1 such that centre(i1) ≤ KP < centre(i1+1)
+        do i1 = 1, NKpDiff-1
+            if (KP < Kp_chorus(i1+1)) exit
+        end do
+        i2 = i1 + 1
 
-        CDAAR = (KP - Kp_chorus(i1)) * CDAAR_chorus(:,:,:,:, i2)  &
-              + (Kp_chorus(i2) - KP) * CDAAR_chorus(:,:,:,:, i1)
+        CDAAR = (Kp_chorus(i2) - KP) * CDAAR_chorus(:,:,:,:, i1)  &
+              + (KP - Kp_chorus(i1)) * CDAAR_chorus(:,:,:,:, i2)
 
-        CDAER = (KP - Kp_chorus(i1)) * CDAER_chorus(:,:,:,:, i2)  &
-              + (Kp_chorus(i2) - KP) * CDAER_chorus(:,:,:,:, i1)
+        CDAER = (Kp_chorus(i2) - KP) * CDAER_chorus(:,:,:,:, i1)  &
+              + (KP - Kp_chorus(i1)) * CDAER_chorus(:,:,:,:, i2)
 
-        CDEER = (KP - Kp_chorus(i1)) * CDEER_chorus(:,:,:,:, i2)  &
-              + (Kp_chorus(i2) - KP) * CDEER_chorus(:,:,:,:, i1)
+        CDEER = (Kp_chorus(i2) - KP) * CDEER_chorus(:,:,:,:, i1)  &
+              + (KP - Kp_chorus(i1)) * CDEER_chorus(:,:,:,:, i2)
 
         CDAAR = CDAAR / (Kp_chorus(i2) - Kp_chorus(i1))
         CDAER = CDAER / (Kp_chorus(i2) - Kp_chorus(i1))
         CDEER = CDEER / (Kp_chorus(i2) - Kp_chorus(i1))
+
     end if
 
-    ! wrap to 24 h (RAM convention)
+    ! RAM convention MLT=25
     CDAAR(:,25,:,:) = CDAAR(:,1,:,:)
     CDAER(:,25,:,:) = CDAER(:,1,:,:)
     CDEER(:,25,:,:) = CDEER(:,1,:,:)
-    CDAAR(:,25,:,:) = CDAAR(:,1,:,:)
 
     return
   end SUBROUTINE WAPARA_Kp
@@ -517,39 +529,46 @@ MODULE ModRamWPI
     use ModRamVariables, ONLY: MU, nR_Dxx, nE_Dxx, nPa_Dxx, nT_Dxx, &
                                RCHOR_Dxx, TCHOR_Dxx, ECHOR_Dxx, PACHOR_Dxx, &
                                CDAAR_chorus, CDAER_chorus, CDEER_chorus, &
-                               CDAAR, CDAER, CDEER, &
-                               nKpDiff, Kp_chorus
+                               nKpDiff
+    use netcdf
+
     !!!! Share Modules
     use ModIoUnit, ONLY: UNITTMP_
 
     implicit none
     integer, intent(in) :: S
 
-    integer :: ncid, vid, ierr
-    character(len=*), parameter :: fname = 'chorus_diffusion_kp.nc'
+    integer :: ncid, vid, ierr, iStatus
+    integer :: Kp_bins(nKpDiff)
+    character(len=*), parameter :: fname = 'bav_diffcoef_chorus.nc'
 
     ! open 
     ierr = nf90_open(trim(PathRamIn)//'BAS_bavDxx/'//fname, nf90_nowrite, ncid)
-    if (ierr /= nf90_noerr) stop 'Cannot open chorus_diffusion_Kp.nc'
+    if (ierr /= nf90_noerr) stop 'Cannot open bav_diffcoef_chorus.nc'
 
     !-- read 1-D axes ------------------------------------------
-    call nf90_inq_varid(ncid, 'r_grid', vid); call nf90_get_var(ncid, vid, RCHOR_Dxx)
-    call nf90_inq_varid(ncid, 'mlt_grid', vid); call nf90_get_var(ncid, vid, TCHOR_Dxx)
-    call nf90_inq_varid(ncid, 'energy_grid', vid); call nf90_get_var(ncid, vid, ECHOR_Dxx)
-    call nf90_inq_varid(ncid, 'pa_grid', vid); call nf90_get_var(ncid, vid, PACHOR_Dxx)
-    call nf90_inq_varid(ncid, 'Kp_bins', vid); call nf90_get_var(ncid, vid, Kp_chorus)
+    iStatus = nf90_inq_varid(ncid, 'r_grid', vid)
+    iStatus = nf90_get_var(ncid, vid, RCHOR_Dxx)
+    iStatus = nf90_inq_varid(ncid, 'mlt_grid', vid)
+    iStatus = nf90_get_var(ncid, vid, TCHOR_Dxx)
+    iStatus = nf90_inq_varid(ncid, 'energy_grid', vid)
+    iStatus = nf90_get_var(ncid, vid, ECHOR_Dxx)
+    iStatus = nf90_inq_varid(ncid, 'pa_grid', vid)
+    iStatus = nf90_get_var(ncid, vid, PACHOR_Dxx)
+    iStatus = nf90_inq_varid(ncid, 'Kp_bins', vid)
+    iStatus = nf90_get_var(ncid, vid, Kp_bins)
 
     !-- read full 5-D diffusion tensors ------------------------
-    call nf90_inq_varid(ncid, 'Daa', vid)
-    call nf90_get_var(ncid, vid, CDAAR_chorus)   ! (nR_Dxx,nT_Dxx,nE_Dxx,nPa_Dxx,nKpDiff)
+    iStatus = nf90_inq_varid(ncid, 'Daa', vid)
+    iStatus = nf90_get_var(ncid, vid, CDAAR_chorus)   ! (nR_Dxx,nT_Dxx,nE_Dxx,nPa_Dxx,nKpDiff)
 
-    call nf90_inq_varid(ncid, 'Dae', vid)
-    call nf90_get_var(ncid, vid, CDAER_chorus)
+    iStatus = nf90_inq_varid(ncid, 'Dae', vid)
+    iStatus = nf90_get_var(ncid, vid, CDAER_chorus)
 
-    call nf90_inq_varid(ncid, 'Dee', vid)
-    call nf90_get_var(ncid, vid, CDEER_chorus)
+    iStatus = nf90_inq_varid(ncid, 'Dee', vid)
+    iStatus = nf90_get_var(ncid, vid, CDEER_chorus)
 
-    call nf90_close(ncid)
+    iStatus = nf90_close(ncid)
 
     write(*,*) '   diffusion tensors loaded (netCDF)'
     return
