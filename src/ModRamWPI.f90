@@ -466,7 +466,7 @@ MODULE ModRamWPI
                                    CDAER, CDAER_chorus, &
                                    CDEER, CDEER_chorus, &
                                    NKpDiff, Kp_chorus
-
+    use ModRamGrids,     ONLY: NT
     implicit none
     integer, intent(in) :: S
 
@@ -510,9 +510,9 @@ MODULE ModRamWPI
     end if
 
     ! RAM convention MLT=25
-    CDAAR(:,25,:,:) = CDAAR(:,1,:,:)
-    CDAER(:,25,:,:) = CDAER(:,1,:,:)
-    CDEER(:,25,:,:) = CDEER(:,1,:,:)
+    CDAAR(:,NT,:,:) = CDAAR(:,1,:,:)
+    CDAER(:,NT,:,:) = CDAER(:,1,:,:)
+    CDEER(:,NT,:,:) = CDEER(:,1,:,:)
 
     return
   end SUBROUTINE WAPARA_Kp
