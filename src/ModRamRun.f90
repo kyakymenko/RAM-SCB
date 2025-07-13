@@ -449,22 +449,28 @@ MODULE ModRamRun
                 DO K=2,NE
                    DO L=1,NPA
                       IF (DoUseBASdiff) THEN
-                         DAMR1(L)=LOG10(CDAAR(I,J,K,nPa-L+1))
+                          IF (CDAAR(I,J,K,nPa-L+1)>0.0) THEN
+                              DAMR1(L)=LOG10(CDAAR(I,J,K,nPa-L+1))
+                          ENDIF
                       ELSE
                          DAMR1(L)=LOG10(BDAAR(I,J,K,L))
                       ENDIF
                    ENDDO
                    DO L=1,NPA
-                      MUBOUN=MU(L)+0.5*WMU(L)
-                      CALL GSL_Interpolation_1D(PA,DAMR1,PAbn(L),Y,GSLerr)
-                      taudaa=10.**Y*fnorm ! <Daa/p2> [1/s]
-                      if (taudaa.gt.1e0) then
-                         print*,'taudaa=',taudaa,' L=',LZ(I),' MLT=',MLT(J)
-                         taudaa=1e-1
-                      endif
-                      if (taudaa.lt.1e-30) taudaa=1e-30
-                      DWAVE(L)=taudaa*(1.-MUBOUN*MUBOUN)*MUBOUN*BOUNHS(I,J,L)
-                      ATAC(I,J,K,L)=DWAVE(L)      ! call WPADIF twice, implicit
+                       IF (DoUseBASdiff .AND. CDAAR(I,J,K,nPa-L+1) == 0.0) THEN
+                          ATAC(I,J,K,L) = 0.0
+                       ELSE
+                           MUBOUN=MU(L)+0.5*WMU(L)
+                           CALL GSL_Interpolation_1D(PA,DAMR1,PAbn(L),Y,GSLerr)
+                           taudaa=10.**Y*fnorm ! <Daa/p2> [1/s]
+                           if (taudaa.gt.1e0) then
+                              print*,'taudaa=',taudaa,' L=',LZ(I),' MLT=',MLT(J)
+                              taudaa=1e-1
+                           endif
+                           if (taudaa.lt.1e-30) taudaa=1e-30
+                           DWAVE(L)=taudaa*(1.-MUBOUN*MUBOUN)*MUBOUN*BOUNHS(I,J,L)
+                           ATAC(I,J,K,L)=DWAVE(L)      ! call WPADIF twice, implicit
+                       ENDIF
                    END DO
                 END DO
              ENDIF

@@ -693,7 +693,6 @@ MODULE ModRamWPI
     integer :: i, j, k, l
     real(DP) :: AN,BN,GN,RP,DENOM
     real(DP), ALLOCATABLE :: F(:), RK(:), RL(:), FACMU(:)
-real(dp) :: vartst1
     ALLOCATE(F(NPA),RK(NPA),RL(NPA),FACMU(NPA))
     F = 0.0; RK = 0.0; RL = 0.0; FACMU = 0.0
 
@@ -710,7 +709,6 @@ real(dp) :: vartst1
           RL(1)=-1.
           DO L=2,NPA-1
             IF(species(S)%s_name.eq.'Electron')then
-vartst1 = maxval(ATAC)
                AN=(ATAW(I,J,K,L)+ATAC(I,J,K,L))/DMU(L)       ! Hiss & chorus
                GN=(ATAW(I,J,K,L-1)+ATAC(I,J,K,L-1))/DMU(L-1) !  "
             ELSE
