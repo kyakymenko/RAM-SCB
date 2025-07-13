@@ -54,18 +54,16 @@ Module ModRamVariables
                            CDAER(:,:,:,:), CDEER(:,:,:,:), &
                            Daa_emic_h(:,:,:,:), Daa_emic_he(:,:,:,:), &
                            EKEV_emic(:), fp2c_emic(:), Ihs_emic(:,:,:), Ihes_emic(:,:,:)
-  integer, parameter :: NKpDiff = 6, &
-                        NR_Dxx  = 20, &
-                        NT_Dxx  = 49, &
-                        NE_Dxx  = 35, &
-                        NPA_Dxx = 72  
+  integer :: NR_Dxx, NT_Dxx, NE_Dxx, NPA_Dxx  
+  integer, parameter :: NKpDiff = 6
   real(DP), dimension(6) :: Kp_Chorus = (/0.5, 1.5, 2.5, 3.5, 5.5, 8.0/) 
-  real(DP) :: CDAAR_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff), &
-              CDAER_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff), &
-              CDEER_Chorus(NR_Dxx,NT_Dxx,NE_Dxx,NPA_Dxx,NKpDiff)
 
-  real(DP) :: RCHOR_Dxx(NR_Dxx), TCHOR_Dxx(NT_Dxx), ECHOR_Dxx(NE_Dxx), &
-              PACHOR_Dxx(NPA_Dxx)
+  real(DP), allocatable :: CDAAR_Chorus(:,:,:,:,:), &
+                           CDAER_Chorus(:,:,:,:,:), &
+                           CDEER_Chorus(:,:,:,:,:)
+
+  real(DP), allocatable :: RCHOR_Dxx(:), TCHOR_Dxx(:), ECHOR_Dxx(:), &
+                           PACHOR_Dxx(:)
 
 ! ModRamLoss variables
   real(DP), ALLOCATABLE :: ATLOS(:,:,:), CHARGE(:,:,:,:,:), &

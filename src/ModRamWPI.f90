@@ -538,7 +538,7 @@ MODULE ModRamWPI
     implicit none
     integer, intent(in) :: S
 
-    integer :: ncid, vid, ierr, iStatus
+    integer :: ncid, vid, ierr, iStatus, dimid, len
     integer :: Kp_bins(nKpDiff)
     character(len=*), parameter :: fname = 'bav_diffcoef_chorus.nc'
 
@@ -546,6 +546,29 @@ MODULE ModRamWPI
     ierr = nf90_open(trim(PathRamIn)//'BAS_bavDxx/'//fname, nf90_nowrite, ncid)
     if (ierr /= nf90_noerr) stop 'Cannot open bav_diffcoef_chorus.nc'
 
+    ! --- Get dimensions ---
+    iStatus = nf90_inq_dimid(ncid, 'nR', dimid)
+    iStatus = nf90_inquire_dimension(ncid, dimid, len=len)
+    nR_Dxx = len
+
+    iStatus = nf90_inq_dimid(ncid, 'nT', dimid)
+    iStatus = nf90_inquire_dimension(ncid, dimid, len=len)
+    nT_Dxx = len
+
+    iStatus = nf90_inq_dimid(ncid, 'nE', dimid)
+    iStatus = nf90_inquire_dimension(ncid, dimid, len=len)
+    nE_Dxx = len
+
+    iStatus = nf90_inq_dimid(ncid, 'nPa', dimid)
+    iStatus = nf90_inquire_dimension(ncid, dimid, len=len)
+    nPa_Dxx = len
+
+    iStatus = nf90_inq_dimid(ncid, 'nKp', dimid)
+    iStatus = nf90_inquire_dimension(ncid, dimid, len=len)
+    allocate(RCHOR_Dxx(nR_Dxx))
+    allocate(TCHOR_Dxx(nT_Dxx))
+    allocate(ECHOR_Dxx(nE_Dxx))
+    allocate(PACHOR_Dxx(nPa_Dxx))
     !-- read 1-D axes ------------------------------------------
     iStatus = nf90_inq_varid(ncid, 'r_grid', vid)
     iStatus = nf90_get_var(ncid, vid, RCHOR_Dxx)
@@ -558,10 +581,12 @@ MODULE ModRamWPI
     iStatus = nf90_inq_varid(ncid, 'Kp_bins', vid)
     iStatus = nf90_get_var(ncid, vid, Kp_bins)
 
+    allocate(CDAAR_chorus(nR_Dxx, nT_Dxx, nE_Dxx, nPa_Dxx, nKpDiff))
+    allocate(CDAER_chorus(nR_Dxx, nT_Dxx, nE_Dxx, nPa_Dxx, nKpDiff))
+    allocate(CDEER_chorus(nR_Dxx, nT_Dxx, nE_Dxx, nPa_Dxx, nKpDiff))
     !-- read full 5-D diffusion tensors ------------------------
     iStatus = nf90_inq_varid(ncid, 'Daa', vid)
-    iStatus = nf90_get_var(ncid, vid, CDAAR_chorus)   ! (nR_Dxx,nT_Dxx,nE_Dxx,nPa_Dxx,nKpDiff)
-
+    iStatus = nf90_get_var(ncid, vid, CDAAR_chorus)   
     iStatus = nf90_inq_varid(ncid, 'Dae', vid)
     iStatus = nf90_get_var(ncid, vid, CDAER_chorus)
 
@@ -668,7 +693,7 @@ MODULE ModRamWPI
     integer :: i, j, k, l
     real(DP) :: AN,BN,GN,RP,DENOM
     real(DP), ALLOCATABLE :: F(:), RK(:), RL(:), FACMU(:)
-
+real(dp) :: vartst1
     ALLOCATE(F(NPA),RK(NPA),RL(NPA),FACMU(NPA))
     F = 0.0; RK = 0.0; RL = 0.0; FACMU = 0.0
 
@@ -685,6 +710,7 @@ MODULE ModRamWPI
           RL(1)=-1.
           DO L=2,NPA-1
             IF(species(S)%s_name.eq.'Electron')then
+vartst1 = maxval(ATAC)
                AN=(ATAW(I,J,K,L)+ATAC(I,J,K,L))/DMU(L)       ! Hiss & chorus
                GN=(ATAW(I,J,K,L-1)+ATAC(I,J,K,L-1))/DMU(L-1) !  "
             ELSE
@@ -719,7 +745,6 @@ MODULE ModRamWPI
         ENDDO
       ENDDO
     ENDDO
-
     DEALLOCATE(F,RK,RL,FACMU)
     RETURN
   END SUBROUTINE WPADIF
