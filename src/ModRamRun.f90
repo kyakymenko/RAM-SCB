@@ -443,34 +443,32 @@ MODULE ModRamRun
        DO I=2,NR
           DO J=1,NT
              IF (XNE(I,J).LE.50.) THEN ! outside pp
-                xfrl=CS*SQRT(XNE(I,J)*RMAS(S)*40*PI)/10./BNES(I,J) ! Fpe/Fcyc
+                !xfrl=CS*SQRT(XNE(I,J)*RMAS(S)*40*PI)/10./BNES(I,J) ! Fpe/Fcyc
                 fnorm=1 ! b-av, no Bw-dep
                 ! interpolate PA diffusion coefficients for implicit scheme
                 DO K=2,NE
                    DO L=1,NPA
                       IF (DoUseBASdiff) THEN
-                          IF (CDAAR(I,J,K,nPa-L+1)>0.0) THEN
-                              DAMR1(L)=LOG10(CDAAR(I,J,K,nPa-L+1))
-                          ENDIF
+                           IF (CDAAR(I,J,K,L)>0.0) THEN
+                              DAMR1(L)=LOG10(CDAAR(I,J,K,L))
+                           ELSE
+                              DAMR1(L)=-20 ! daa = 1.0e-20
+                           ENDIF
                       ELSE
                          DAMR1(L)=LOG10(BDAAR(I,J,K,L))
                       ENDIF
                    ENDDO
                    DO L=1,NPA
-                       IF (DoUseBASdiff .AND. CDAAR(I,J,K,nPa-L+1) == 0.0) THEN
-                          ATAC(I,J,K,L) = 0.0
-                       ELSE
-                           MUBOUN=MU(L)+0.5*WMU(L)
-                           CALL GSL_Interpolation_1D(PA,DAMR1,PAbn(L),Y,GSLerr)
-                           taudaa=10.**Y*fnorm ! <Daa/p2> [1/s]
-                           if (taudaa.gt.1e0) then
-                              print*,'taudaa=',taudaa,' L=',LZ(I),' MLT=',MLT(J)
-                              taudaa=1e-1
-                           endif
-                           if (taudaa.lt.1e-30) taudaa=1e-30
-                           DWAVE(L)=taudaa*(1.-MUBOUN*MUBOUN)*MUBOUN*BOUNHS(I,J,L)
-                           ATAC(I,J,K,L)=DWAVE(L)      ! call WPADIF twice, implicit
-                       ENDIF
+                     MUBOUN=MU(L)+0.5*WMU(L)
+                     CALL GSL_Interpolation_1D(PA,DAMR1,PAbn(L),Y,GSLerr)
+                     taudaa=10.**Y*fnorm ! <Daa/p2> [1/s]
+                     if (taudaa.gt.1e0) then
+                        print*,'taudaa=',taudaa,' L=',LZ(I),' MLT=',MLT(J)
+                        taudaa=1e-1
+                     endif
+                     if (taudaa.lt.1e-30) taudaa=1e-30
+                     DWAVE(L)=taudaa*(1.-MUBOUN*MUBOUN)*MUBOUN*BOUNHS(I,J,L)
+                     ATAC(I,J,K,L)=DWAVE(L)      ! call WPADIF twice, implicit
                    END DO
                 END DO
              ENDIF
