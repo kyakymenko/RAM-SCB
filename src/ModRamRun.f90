@@ -175,7 +175,7 @@ MODULE ModRamRun
        LSDR(iS)=LSDR(iS)+ELORC(iS)
 
        ! Interpolate diffusivity as funtion of Kp, if necessary
-       if (DoUseWPI.and.DoUseBASdiff.and.DoUseKpDiff) then
+       if (species(iS)%WPI.and.DoUseBASdiff.and.DoUseKpDiff) then
           call WAPARA_Kp(iS)
        end if
 
@@ -449,8 +449,8 @@ MODULE ModRamRun
                 DO K=2,NE
                    DO L=1,NPA
                       IF (DoUseBASdiff) THEN
-                           IF (CDAAR(I,J,K,L)>0.0) THEN
-                              DAMR1(L)=LOG10(CDAAR(I,J,K,L))
+                           IF (CDAAR(I,J,K,nPa-L+1)>1.0e-20) THEN
+                              DAMR1(L)=LOG10(CDAAR(I,J,K,nPa-L+1))
                            ELSE
                               DAMR1(L)=-20 ! daa = 1.0e-20
                            ENDIF
