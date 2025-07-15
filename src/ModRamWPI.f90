@@ -509,7 +509,6 @@ MODULE ModRamWPI
 
     end if
 
-    ! RAM convention MLT=25
     CDAAR(:,NT,:,:) = CDAAR(:,1,:,:)
     CDAER(:,NT,:,:) = CDAER(:,1,:,:)
     CDEER(:,NT,:,:) = CDEER(:,1,:,:)
