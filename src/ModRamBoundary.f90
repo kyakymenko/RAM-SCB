@@ -39,7 +39,7 @@ subroutine get_boundary_flux
 end subroutine get_boundary_flux
 
 !==============================================================================
-subroutine get_geomlt_flux(NameParticleIn, fluxOut_II)
+subroutine get_geomlt_flux(NameParticleIn, fluxOut_II, S)
 ! Converts a LANL geomlt file into RAM boundary flux
 
 !!!! Module Variables
@@ -58,6 +58,7 @@ subroutine get_geomlt_flux(NameParticleIn, fluxOut_II)
 
   implicit none
 
+  integer, intent(in) :: S
   integer :: GSLerr
   character(len=4), intent(in) :: NameParticleIn
   real(DP),intent(out):: fluxOut_II(nT, nE)
@@ -201,7 +202,8 @@ subroutine get_geomlt_flux(NameParticleIn, fluxOut_II)
   logELan(1+lE:NEL_+le) = log10(eGrid_SI(iSpec,1:NEL_))
   if (lE.eq.1) logELan(1)       = log10(0.1000)
   if (rE.eq.1) logELan(NEL_+pE) = log10(1000.00)
-  logERam = log10(Ekev(iSpec,:))
+!  logERam = log10(Ekev(iSpec,:)) ! VJ: this is wrong
+  logERam = log10(Ekev(S,:))
 
   ! Interpolate/Extrapolate in energy space; return to normal units.
   ! Interpolation in Log space isn't really needed with the GSL interpolation
@@ -271,12 +273,12 @@ end subroutine get_geomlt_flux
       ! LANL interpolated flux files.
       select case(species(S)%s_name)
       case ("Electron")
-        call get_geomlt_flux('elec', FluxLanl)
+        call get_geomlt_flux('elec', FluxLanl, S)
       case ("Hydrogen", "OxygenP1", "HeliumP1", "Nitrogen")
         ! We assume a fraction of the oxygen is actually nitrogen
         ! The specific percentage is configurable in the PARAM file
         ! By default the nitrogen fraction is assumed to be zero
-        call get_geomlt_flux('prot', FluxLanl)
+        call get_geomlt_flux('prot', FluxLanl, S)
       case default
         FluxLanl = 0._dp
       end select

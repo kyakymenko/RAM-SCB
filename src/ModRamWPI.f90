@@ -481,15 +481,15 @@ MODULE ModRamWPI
         CDAER = CDAER_chorus(:,:,:,:,1)
         CDEER = CDEER_chorus(:,:,:,:,1)
 
-    elseif (KP >= Kp_chorus(NKpDiff)) then
-        CDAAR = CDAAR_chorus(:,:,:,:, NKpDiff)
-        CDAER = CDAER_chorus(:,:,:,:, NKpDiff)
-        CDEER = CDEER_chorus(:,:,:,:, NKpDiff)
+    elseif (KP >= Kp_chorus(NKpDiff-1)) then ! ignore max Kp bin because lack of data
+        CDAAR = CDAAR_chorus(:,:,:,:, NKpDiff-1)
+        CDAER = CDAER_chorus(:,:,:,:, NKpDiff-1)
+        CDEER = CDEER_chorus(:,:,:,:, NKpDiff-1)
 
     ! If KP lies between two centres, linear interpolation
     else
         ! find lower-bound index i1 such that centre(i1) ≤ KP < centre(i1+1)
-        do i1 = 1, NKpDiff-1
+        do i1 = 1, NKpDiff-2
             if (KP < Kp_chorus(i1+1)) exit
         end do
         i2 = i1 + 1
@@ -745,6 +745,78 @@ MODULE ModRamWPI
     DEALLOCATE(F,RK,RL,FACMU)
     RETURN
   END SUBROUTINE WPADIF
+
+!*************************************************************************
+!			 	WENDIF
+!     Routine calculates the changes of the distribution function
+!            due to wave induced energy diffusion using implicit scheme
+!*************************************************************************
+	SUBROUTINE WENDIF(S)
+
+  !!!! Module Variables
+  use ModRamMain,      ONLY: DP, PathRamOut
+  use ModRamGrids,     ONLY: NT, NR, NE, NPA
+  use ModRamTiming,    ONLY: Dts, T
+  use ModRamVariables, ONLY: F2, DE, WE, ATEC, FACGR        
+  !!!! Share Modules
+  use ModIoUnit, ONLY: UNITTMP_
+
+  implicit none
+
+  integer, intent(in) :: S
+	integer :: i, j, k, l
+  real(DP) :: AN,BN,GN,RP,DENOM
+  real(DP), ALLOCATABLE :: F(:), EK(:), EL(:)
+  ALLOCATE(F(NE+1),EK(NE),EL(NE))
+  F = 0.0; EK = 0.0; EL = 0.0
+
+	DO J=1,NT  
+	DO I=2,NR
+	DO L=2,NPA
+	  DO K=2,NE
+	    F(K)=F2(S,I,J,K,L)/FACGR(S,K)
+	  ENDDO
+
+	  F(1)=F(2)				! lower b.c.	
+	  EK(1)=0.	
+	  EL(1)=-1.
+	  F(NE+1)=0.				! upper b.c.	
+	  DO K=2,NE
+!	   AN=ATEW(I,J,K,L)/FACGR(K)/WE(K)             ! only hiss
+!	   GN=ATEW(I,J,K-1,L)/FACGR(K)/WE(K)
+	   AN=(ATEC(I,J,K,L))*DTs/FACGR(S,K)/WE(S,K)/DE(S,K)     ! Only chorus
+	   GN=(ATEC(I,J,K,L-1))*DTs/FACGR(S,K)/WE(S,K)/DE(S,K-1)
+	   BN=AN+GN
+	if (abs(-1-bn).lt.(abs(an)+abs(gn))) then
+	 open(20,file=trim(PathRamOut)//'diffcf_e.dat',status='unknown', &
+          position='append')
+	 write(20,*) ' in WENDIF T=',T/3600,' hr'
+	 write(20,*) 'i=',i,' j=',j,' k=',k,' l=',l
+	 write(20,*) 'an=',AN,' -1-bn=',(-1-BN),' gn=',GN
+	 close(20)
+	endif
+!	   RP=AN*F(K+1)+(1.-BN)*F(K)+GN*F(K-1)		! Cr-Nic
+	   RP=F(K)
+	   DENOM=BN+GN*EL(K-1)+1
+	   EK(K)=(RP+GN*EK(K-1))/DENOM
+	   EL(K)=-AN/DENOM
+	  ENDDO	   
+
+	  F(NE)=EK(NE)					! upper b.c.
+	  DO K=NE-1,1,-1
+	   F(K)=EK(K)-EL(K)*F(K+1)
+	  ENDDO
+	 DO K=1,NE
+	  F2(S,I,J,K,L)=F(K)*FACGR(S,K)
+	 ENDDO
+
+  ENDDO
+  ENDDO
+  ENDDO
+  DEALLOCATE(F,EK,EL)
+	RETURN
+	END SUBROUTINE WENDIF
+
 
 !*************************************************************************
 !                               EMIC wave amplitude

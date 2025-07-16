@@ -158,6 +158,7 @@ MODULE ModRamInit
     ! Deallocate all allocated arrays for cleanup
  
     use ModRamVariables ! Need to deallocate all variables
+    use ModRamParams,    ONLY: DoUseBASdiff
  
     implicit none
   
@@ -176,7 +177,8 @@ MODULE ModRamInit
                ZRPabn, FFACTOR)
   ! ModRamWPI Variables
     DEALLOCATE(WALOS1, WALOS2, WALOS3, fpofc, NDVVJ, NDAAJ, ENOR, ECHOR, BDAAR, &
-               CDAAR, CDAER, CDEER, CDAAR_chorus, CDAER_chorus, CDEER_chorus)
+               CDAAR, CDAER, CDEER)
+    if (DoUseBASDiff) DEALLOCATE(CDAAR_chorus, CDAER_chorus, CDEER_chorus)
     DEALLOCATE(Daa_emic_h, Daa_emic_he, EKEV_emic, fp2c_emic, Ihs_emic, Ihes_emic)
   ! ModRamLoss Variables
   !  DEALLOCATE(ATLOS, ACHAR)
