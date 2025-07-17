@@ -767,7 +767,7 @@ MODULE ModRamWPI
 	integer :: i, j, k, l
   real(DP) :: AN,BN,GN,RP,DENOM
   real(DP), ALLOCATABLE :: F(:), EK(:), EL(:)
-  ALLOCATE(F(NE+1),EK(NE),EL(NE))
+  ALLOCATE(F(NE),EK(NE),EL(NE))
   F = 0.0; EK = 0.0; EL = 0.0
 
 	DO J=1,NT  
@@ -780,12 +780,11 @@ MODULE ModRamWPI
 	  F(1)=F(2)				! lower b.c.	
 	  EK(1)=0.	
 	  EL(1)=-1.
-	  F(NE+1)=0.				! upper b.c.	
 	  DO K=2,NE
 !	   AN=ATEW(I,J,K,L)/FACGR(K)/WE(K)             ! only hiss
 !	   GN=ATEW(I,J,K-1,L)/FACGR(K)/WE(K)
 	   AN=(ATEC(I,J,K,L))*DTs/FACGR(S,K)/WE(S,K)/DE(S,K)     ! Only chorus
-	   GN=(ATEC(I,J,K,L-1))*DTs/FACGR(S,K)/WE(S,K)/DE(S,K-1)
+	   GN=(ATEC(I,J,K-1,L))*DTs/FACGR(S,K)/WE(S,K)/DE(S,K-1)
 	   BN=AN+GN
 	if (abs(-1-bn).lt.(abs(an)+abs(gn))) then
 	 open(20,file=trim(PathRamOut)//'diffcf_e.dat',status='unknown', &
@@ -802,13 +801,13 @@ MODULE ModRamWPI
 	   EL(K)=-AN/DENOM
 	  ENDDO	   
 
-	  F(NE)=EK(NE)					! upper b.c.
+	  F(NE)=EK(NE)					! upper b.c. is F(NE+1)=0
 	  DO K=NE-1,1,-1
 	   F(K)=EK(K)-EL(K)*F(K+1)
 	  ENDDO
-	 DO K=1,NE
+	  DO K=1,NE
 	  F2(S,I,J,K,L)=F(K)*FACGR(S,K)
-	 ENDDO
+	  ENDDO
 
   ENDDO
   ENDDO
