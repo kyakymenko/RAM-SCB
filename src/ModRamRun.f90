@@ -498,7 +498,8 @@ MODULE ModRamRun
                         print*,'taudee=',taudaa,' L=',LZ(I),' MLT=',MLT(J)
                         taudaa=1e-1
                      endif
-                     ATEC(I,J,K,L)= taudaa * GRBND(S,K)*SQRT((GRBND(S,K)-1.)*(GRBND(S,K)+1.)) ! = dee * FACGR eval. at K+0.5      
+                     ATEC(I,J,K,L)= taudaa * EBND(S,K) * EBND(S,K) * &
+                                    GRBND(S,K)*SQRT((GRBND(S,K)-1.)*(GRBND(S,K)+1.)) ! = dee * FACGR eval. at K+0.5      
                    END DO
                 END DO
 
