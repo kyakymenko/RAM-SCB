@@ -107,7 +107,7 @@ MODULE ModRamInit
   ! ModRamWPI Variables
     ALLOCATE(WALOS1(NR,NE), WALOS2(NR,NE), WALOS3(NR,NE), fpofc(NCF), NDVVJ(NR,ENG,NPA,NCF), &
              NDAAJ(NR,ENG,NPA,NCF), ENOR(ENG), ECHOR(ENG), BDAAR(NR,NT,ENG,NPA), &
-             CDAAR(NR,NT,NE,NPA))
+             CDAAR(NR,NT,NE,NPA), CDAER(NR,NT,NE,NPA), CDEER(NR,NT,NE,NPA))
     WALOS1 = 0._dp; WALOS2 = 0._dp; WALOS3 = 0._dp; fpofc = 0._dp; NDVVJ = 0._dp; NDAAJ = 0._dp
     ENOR = 0._dp; ECHOR = 0._dp; BDAAR = 0._dp; CDAAR = 0._dp
 
@@ -158,6 +158,7 @@ MODULE ModRamInit
     ! Deallocate all allocated arrays for cleanup
  
     use ModRamVariables ! Need to deallocate all variables
+    use ModRamParams,    ONLY: DoUseBASdiff
  
     implicit none
   
@@ -176,7 +177,8 @@ MODULE ModRamInit
                ZRPabn, FFACTOR)
   ! ModRamWPI Variables
     DEALLOCATE(WALOS1, WALOS2, WALOS3, fpofc, NDVVJ, NDAAJ, ENOR, ECHOR, BDAAR, &
-               CDAAR)
+               CDAAR, CDAER, CDEER)
+    if (DoUseBASDiff) DEALLOCATE(CDAAR_chorus, CDAER_chorus, CDEER_chorus)
     DEALLOCATE(Daa_emic_h, Daa_emic_he, EKEV_emic, fp2c_emic, Ihs_emic, Ihes_emic)
   ! ModRamLoss Variables
   !  DEALLOCATE(ATLOS, ACHAR)
@@ -214,7 +216,7 @@ MODULE ModRamInit
     use ModScbVariables, ONLY: radRaw, azimRaw
     !!!! Modules Subroutines/Functions
     use ModRamWPI,     ONLY: WAPARA_HISS, WAPARA_BAS, WAPARA_CHORUS, WAVEPARA1, WAVEPARA2,&
-                             WAPARA_EMIC
+                             WAPARA_EMIC, WAPARA_Kp
     use ModRamIndices, ONLY: init_indices, update_indices
     !!!! Share Modules
     use ModTimeConvert, ONLY: TimeType, time_real_to_int, time_int_to_real
@@ -344,6 +346,7 @@ MODULE ModRamInit
              CALL WAPARA_HISS(iS)
              IF (DoUseBASdiff) then
                 CALL WAPARA_BAS(iS)
+                CALL WAPARA_Kp(iS) ! populate CDXXR arrays
              ELSE
                 CALL WAPARA_CHORUS(iS)
              ENDIF

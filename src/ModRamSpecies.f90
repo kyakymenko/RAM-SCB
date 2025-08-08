@@ -55,8 +55,8 @@ MODULE ModRamSpecies
      RAMSpecies(1)%CEX_species = 'na'
      RAMSpecies(1)%Initialization = 'InitializationFile'
      RAMSpecies(1)%plasmasphereRatio = 1.0
-     RAMSpecies(1)%Emin = 0.1
-     RAMSpecies(1)%Emax = -1.0
+     RAMSpecies(1)%Emin = 10
+     RAMSpecies(1)%Emax = 5700
 
      ! Protons
      RAMSpecies(2)%s_name = "Hydrogen"
