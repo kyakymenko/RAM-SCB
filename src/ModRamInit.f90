@@ -178,7 +178,6 @@ MODULE ModRamInit
   ! ModRamWPI Variables
     DEALLOCATE(WALOS1, WALOS2, WALOS3, fpofc, NDVVJ, NDAAJ, ENOR, ECHOR, BDAAR, &
                CDAAR, CDAER, CDEER)
-    if (DoUseBASDiff) DEALLOCATE(CDAAR_chorus, CDAER_chorus, CDEER_chorus)
     DEALLOCATE(Daa_emic_h, Daa_emic_he, EKEV_emic, fp2c_emic, Ihs_emic, Ihes_emic)
   ! ModRamLoss Variables
   !  DEALLOCATE(ATLOS, ACHAR)
@@ -193,7 +192,13 @@ MODULE ModRamInit
     DEALLOCATE(SETRC, ELORC, LSDR, LSCHA, LSATM, LSCOE, LSCSC, LSWAE, XNN, XND, &
                LNCN, LNCD, LECN, LECD, ENERN, ENERD, ATEW, ATAW, ATAC, ATEC, &
                XNE, ATMC, ATAW_emic_h, ATAW_emic_he,ESUM, NSUM)
+  ! Variables that may not have been allocated:
+    if (ALLOCATED(CDAAR_chorus)) then
+        DEALLOCATE(CDAAR_chorus, CDAER_chorus, CDEER_chorus, RCHOR_Dxx, &
+                   TCHOR_Dxx, ECHOR_Dxx, PACHOR_Dxx)
+    endif
   !!!!!!!!!
+
  
  
   end subroutine ram_deallocate
