@@ -117,8 +117,8 @@ subroutine get_geomlt_flux(NameParticleIn, fluxOut_II, S)
   ! outside of the files energy range.
   rE = 0
   lE = 0
-  if (eGrid_SI(iSpec,1).gt.EkeV(iSpec, 1))     lE = 1
-  if (eGrid_SI(iSpec,NEL_).lt.EkeV(iSpec, nE)) rE = 1
+  if (eGrid_SI(iSpec,1).gt.EkeV(S, 1))     lE = 1
+  if (eGrid_SI(iSpec,NEL_).lt.EkeV(S, nE)) rE = 1
   pE = rE + lE
   allocate(flux_II(0:NTL,NEL_+pE), logFlux_II(nT,NEL_+pE), logELan(NEL_+pE), logERam(nE))
   flux_II = 0.0; logFlux_II = 0.0; logELan = 0.0; logERam = 0.0
@@ -172,6 +172,8 @@ subroutine get_geomlt_flux(NameParticleIn, fluxOut_II, S)
 
   if (rE.eq.1) then
      do j=1,NTL-1
+        ! FIX NEEDED: for the case of energy grid extending to high energies,
+        ! 0.1 is probably too high
         flux_II(j,NEL_+pE) = 0.1
      enddo
   endif
@@ -201,7 +203,7 @@ subroutine get_geomlt_flux(NameParticleIn, fluxOut_II, S)
   ! Place energy grids into log space.
   logELan(1+lE:NEL_+le) = log10(eGrid_SI(iSpec,1:NEL_))
   if (lE.eq.1) logELan(1)       = log10(0.1000)
-  if (rE.eq.1) logELan(NEL_+pE) = log10(1000.00)
+  if (rE.eq.1) logELan(NEL_+pE) = log10(EkeV(S,NE))
 !  logERam = log10(Ekev(iSpec,:)) ! VJ: this is wrong
   logERam = log10(Ekev(S,:))
 
