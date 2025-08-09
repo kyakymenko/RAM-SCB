@@ -96,6 +96,7 @@ rundir:
                 mv initialization.nc input_ram/;            \
 		mv QinDenton_20130317_1min.txt input_scb/;  \
 		mv NitrogenCrossSections.dat input_ram/; \
+		mkdir -p input_ram/BAS_bavDxx; \
 		cp -r ${IMDIR}/input/glow_data input_sce/;	
 	@(if [ "$(STANDALONE)" != "NO" ]; then \
 		cd ${RUNDIR} ; \
